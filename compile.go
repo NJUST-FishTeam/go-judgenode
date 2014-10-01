@@ -10,7 +10,7 @@ import (
 
 func compile(codepath, lang string) (compileOutput string, err error) {
 	ch := make(chan string)
-	compile := func(cmd *exec.Cmd) (err error) {
+	compile := func(cmd *exec.Cmd) {
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
 			log.Printf("Error: %s\n", err)
@@ -22,7 +22,8 @@ func compile(codepath, lang string) (compileOutput string, err error) {
 		}
 		bytes, _ := ioutil.ReadAll(stderr)
 		if err := cmd.Wait(); err != nil {
-			ch <- (err.Error() + "\n" + string(bytes))
+			log.Printf("Error: %s\n", err)
+			return
 		}
 		ch <- string(bytes)
 		return
@@ -46,5 +47,5 @@ func compile(codepath, lang string) (compileOutput string, err error) {
 	case <-time.After(time.Second * 15):
 		return "", errors.New("Compile Time Out")
 	}
-	return "", nil
+	return "", errors.New("System Error")
 }
