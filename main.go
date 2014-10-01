@@ -50,6 +50,11 @@ func main() {
 			Value: "guest",
 			Usage: "the password of the RabbitMQ",
 		},
+		cli.StringFlag{
+			Name:  "datapath",
+			Value: "./testdata/",
+			Usage: "The path of test data",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		conn, err := amqp.Dial("amqp://" +
@@ -97,6 +102,7 @@ func main() {
 		go func() {
 			for d := range msgs {
 				log.Printf("Received a message: %s", d.Body)
+				dealMessage(d.Body, c.String("datapath"))
 				d.Ack(false)
 			}
 		}()
