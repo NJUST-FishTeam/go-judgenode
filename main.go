@@ -18,6 +18,11 @@ func failOnError(err error, msg string) {
 
 const APP_VER = "0.1.0"
 
+var (
+	testdataPath = "./testdata/"
+	tmpPath      = "./tmp/"
+)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "JudgeNode"
@@ -52,11 +57,22 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "datapath",
-			Value: "./testdata/",
+			Value: testdataPath,
 			Usage: "The path of test data",
+		},
+		cli.StringFlag{
+			Name:  "tmppath",
+			Value: tmpPath,
+			Usage: "The path of tmp dir",
 		},
 	}
 	app.Action = func(c *cli.Context) {
+		if _, err := os.Stat(c.String("tmppath")); err != nil && !os.IsExist(err) {
+			os.MkdirAll(c.String("tmppath"), os.ModePerm)
+		}
+		testdataPath = c.String("testdataPath")
+		tmpPath = c.String("tmpPath")
+
 		conn, err := amqp.Dial("amqp://" +
 			c.String("user") + ":" +
 			c.String("password") + "@" +
@@ -102,7 +118,7 @@ func main() {
 		go func() {
 			for d := range msgs {
 				log.Printf("Received a message: %s", d.Body)
-				dealMessage(d.Body, c.String("datapath"))
+				dealMessage(d.Body, c.String("datapath"), c.String("tmppath"))
 				d.Ack(false)
 			}
 		}()
