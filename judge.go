@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,7 +11,26 @@ import (
 	"strings"
 )
 
-func judge(r request) {
+type result struct {
+	Status    string `json:"status"`
+	Runtime   int    `json:"runtime"`
+	Runmemory int    `json:"runmemory"`
+	Message   string `json:"message"`
+}
+
+type detail struct {
+	Result []result `json:"result"`
+}
+
+func judge(r request) ([]byte, int) {
+	var d detail
+	var totalScore int
+	addResult := func(num int, status string, time, memory int, message string) {
+		d.Result = append(d.Result, result{Status: status, Runtime: time, Runmemory: memory, Message: message})
+		if status == "Accepted" {
+			totalScore += r.CaseScore[num]
+		}
+	}
 	for i := 0; i < r.CaseCount; i++ {
 		prepareFiles(r, i)
 		err := runProgram(r)
@@ -24,6 +44,8 @@ func judge(r request) {
 		addResult(i, result, time, memory, "")
 		cleanFiles()
 	}
+	bytes, _ := json.Marshal(d)
+	return bytes, totalScore
 }
 
 func prepareFiles(r request, num int) {

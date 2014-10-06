@@ -7,7 +7,9 @@ import (
 	"os/user"
 	"strconv"
 
+	"database/sql"
 	"github.com/codegangsta/cli"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/streadway/amqp"
 )
 
@@ -26,6 +28,7 @@ var (
 	runPath      = "./rundir/"
 	uid          int
 	gid          int
+	db           *sql.DB
 )
 
 func init() {
@@ -98,6 +101,9 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) {
 		initDir(c)
+		db, _ = sql.Open("mysql", "root:jych-0017@/fishteam_cat")
+		defer db.Close()
+		//db.Ping()
 
 		conn, err := amqp.Dial("amqp://" +
 			c.String("user") + ":" +

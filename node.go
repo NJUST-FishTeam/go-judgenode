@@ -19,27 +19,23 @@ type request struct {
 	Lang        string `json:"lang"`
 	TestDataId  int    `json:"testdataid"`
 	CaseCount   int    `json:"casecount"`
-}
-
-type result map[string]string
-
-type detail struct {
-	Result []result `json:"result"`
+	CaseScore   []int  `json:"casescore"`
 }
 
 var (
 	compiledProgram string
+	r               request
 )
 
 func dealMessage(message []byte, datapath, tmppath string) {
-	r := parseRequest(message)
+	r = parseRequest(message)
 
 	fileName := saveCodeFile(r.Code, r.Lang, tmppath)
 
 	compileMessage, err := compile(path.Join(tmppath, fileName), r.Lang)
 	if err == nil && compileMessage != "" {
-		// TODO(maemual): CE
-
+		// Compile Error
+		saveResult(true, []byte(compileMessage), 0, r.StatusID)
 	} else if err != nil {
 		log.Fatalf("%s: %s", "Comple Error", err)
 		panic(fmt.Sprintf("%s: %s", "Compile Error", err))
@@ -51,8 +47,8 @@ func dealMessage(message []byte, datapath, tmppath string) {
 	currentpath, _ := os.Getwd()
 	compiledProgram = path.Join(currentpath, "Main"+suffifx)
 	os.Chown(compiledProgram, uid, gid)
-	judge(r)
-	saveResult()
+	response, total := judge(r)
+	saveResult(false, response, total, r.StatusID)
 }
 
 func parseRequest(message []byte) (r request) {
@@ -77,10 +73,16 @@ func saveCodeFile(code, lang, tmppath string) (fileName string) {
 	return
 }
 
-func addResult(caseNumber int, result string, time, memory int, extraMessage string) {
-	fmt.Println(caseNumber, result, time, memory, extraMessage)
-}
-
-func saveResult() {
-
+func saveResult(ce bool, data []byte, total int, statusid int) {
+	db.Ping()
+	if ce {
+		ceMessage := string(data)
+		stmt, _ := db.Prepare("update fishteam_cat.submit_status set compilerOutput = ? , score = ? where id = ?;")
+		defer stmt.Close()
+		stmt.Exec(ceMessage, -1, statusid)
+	} else {
+		stmt, _ := db.Prepare("update fishteam_cat.submit_status set detail = ? , score = ? where id = ?")
+		defer stmt.Close()
+		stmt.Exec(string(data), total, statusid)
+	}
 }
