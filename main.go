@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
+	"strconv"
 
 	"github.com/codegangsta/cli"
 	"github.com/streadway/amqp"
@@ -17,6 +19,34 @@ func failOnError(err error, msg string) {
 }
 
 const APP_VER = "0.1.0"
+
+var (
+	testdataPath = "./testdata/"
+	tmpPath      = "./tmp/"
+	runPath      = "./rundir/"
+	uid          int
+	gid          int
+)
+
+func init() {
+	usr, _ := user.Lookup(os.Getenv("SUDO_USER"))
+	uid, _ = strconv.Atoi(usr.Uid)
+	gid, _ = strconv.Atoi(usr.Gid)
+}
+
+func initDir(c *cli.Context) {
+	if _, err := os.Stat(c.String("tmppath")); err != nil && !os.IsExist(err) {
+		os.MkdirAll(c.String("tmppath"), os.ModePerm)
+	}
+	tmpPath = c.String("tmppath")
+	os.Chown(tmpPath, uid, gid)
+	if _, err := os.Stat(c.String("runpath")); err != nil && !os.IsExist(err) {
+		os.MkdirAll(c.String("runpath"), os.ModePerm)
+	}
+	runPath = c.String("runpath")
+	os.Chown(runPath, uid, gid)
+	testdataPath = c.String("datapath")
+}
 
 func main() {
 	app := cli.NewApp()
@@ -52,11 +82,23 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "datapath",
-			Value: "./testdata/",
+			Value: testdataPath,
 			Usage: "The path of test data",
+		},
+		cli.StringFlag{
+			Name:  "tmppath",
+			Value: tmpPath,
+			Usage: "The path of tmp dir",
+		},
+		cli.StringFlag{
+			Name:  "runpath",
+			Value: runPath,
+			Usage: "The dir of sandbox",
 		},
 	}
 	app.Action = func(c *cli.Context) {
+		initDir(c)
+
 		conn, err := amqp.Dial("amqp://" +
 			c.String("user") + ":" +
 			c.String("password") + "@" +
@@ -102,7 +144,7 @@ func main() {
 		go func() {
 			for d := range msgs {
 				log.Printf("Received a message: %s", d.Body)
-				dealMessage(d.Body, c.String("datapath"))
+				dealMessage(d.Body, c.String("datapath"), c.String("tmppath"))
 				d.Ack(false)
 			}
 		}()

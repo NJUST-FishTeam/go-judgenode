@@ -55,11 +55,6 @@ func compile(codepath, lang string) (string, error) {
 			return
 		}
 		bytes, _ := ioutil.ReadAll(stderr)
-		if err := cmd.Wait(); err != nil {
-			log.Printf("Error: %s\n", err)
-			e <- true
-			return
-		}
 		ch <- string(bytes)
 		return
 	}(cmd)
