@@ -5,43 +5,62 @@ import (
 	"log"
 	"path"
 
+	"encoding/json"
 	"os"
 
-	"github.com/bitly/go-simplejson"
+	//"github.com/bitly/go-simplejson"
+)
+
+type request struct {
+	StatusID    int    `json:"statusid"`
+	Code        string `json:"code"`
+	TimeLimit   int    `json:"timelimit"`
+	MemoryLimit int    `json:"memorylimit"`
+	Lang        string `json:"lang"`
+	TestDataId  int    `json:"testdataid"`
+	CaseCount   int    `json:"casecount"`
+}
+
+type result map[string]string
+
+type detail struct {
+	Result []result `json:"result"`
+}
+
+var (
+	compiledProgram string
 )
 
 func dealMessage(message []byte, datapath, tmppath string) {
-	js, _ := simplejson.NewJson(message)
-	statusId := js.Get("statusid").MustInt()
-	testdataId := js.Get("testdataid").MustArray()
-	code := js.Get("code").MustString()
-	timeLimit := js.Get("timelimit").MustInt()
-	memoryLimit := js.Get("memorylimit").MustInt()
-	lang := js.Get("lang").MustString()
+	r := parseRequest(message)
 
-	fileName := saveCodeFile(code, lang, tmppath)
+	fileName := saveCodeFile(r.Code, r.Lang, tmppath)
 
-	compileMessage, err := compile(path.Join(tmppath, fileName), lang)
-	if err == nil && compileMessage == "" {
-
-	} else if err == nil && compileMessage != "" {
+	compileMessage, err := compile(path.Join(tmppath, fileName), r.Lang)
+	if err == nil && compileMessage != "" {
 		// TODO(maemual): CE
 
-	} else {
+	} else if err != nil {
 		log.Fatalf("%s: %s", "Comple Error", err)
 		panic(fmt.Sprintf("%s: %s", "Compile Error", err))
 	}
-
-	log.Println(statusId)
-	log.Println(testdataId)
-	log.Println(code)
-	log.Println(timeLimit)
-	log.Println(memoryLimit)
-	log.Println(lang)
+	suffifx := ""
+	if r.Lang == "java" {
+		suffifx += ".class"
+	}
+	currentpath, _ := os.Getwd()
+	compiledProgram = path.Join(currentpath, "Main"+suffifx)
+	os.Chown(compiledProgram, uid, gid)
+	judge(r)
+	saveResult()
 }
 
-func saveCodeFile(code, lang, tmppath string) string {
-	fileName := ""
+func parseRequest(message []byte) (r request) {
+	json.Unmarshal(message, &r)
+	return
+}
+
+func saveCodeFile(code, lang, tmppath string) (fileName string) {
 	if lang != "java" {
 		fileName = "code." + lang
 	} else {
@@ -55,5 +74,13 @@ func saveCodeFile(code, lang, tmppath string) string {
 	}
 	sourceCode.WriteString(code)
 	sourceCode.Close()
-	return fileName
+	return
+}
+
+func addResult(caseNumber int, result string, time, memory int, extraMessage string) {
+	fmt.Println(caseNumber, result, time, memory, extraMessage)
+}
+
+func saveResult() {
+
 }
