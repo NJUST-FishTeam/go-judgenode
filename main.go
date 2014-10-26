@@ -8,7 +8,9 @@ import (
 	"strconv"
 
 	"database/sql"
+
 	"github.com/codegangsta/cli"
+	"github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/streadway/amqp"
 )
@@ -29,6 +31,7 @@ var (
 	uid          int
 	gid          int
 	db           *sql.DB
+	rdb          redis.Conn
 )
 
 func init() {
@@ -98,12 +101,26 @@ func main() {
 			Value: runPath,
 			Usage: "The dir of sandbox",
 		},
+		cli.StringFlag{
+			Name:  "p",
+			Usage: "the password of mysql",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		initDir(c)
-		db, _ = sql.Open("mysql", "root:jych-0017@/fishteam_cat")
+		db, err := sql.Open("mysql", "root:"+c.String("p")+"@/fishteam_cat")
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer db.Close()
-		//db.Ping()
+
+		rdb, err := redis.Dial("tcp", ":6379")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rdb.Close()
+
+		rdb.Do("HSET", "contestscore:1:100", "A", 100)
 
 		conn, err := amqp.Dial("amqp://" +
 			c.String("user") + ":" +

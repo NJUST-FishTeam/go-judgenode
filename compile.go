@@ -9,7 +9,6 @@ import (
 )
 
 func compile(codepath, lang string) (string, error) {
-
 	cmd := new(exec.Cmd)
 
 	switch lang {
