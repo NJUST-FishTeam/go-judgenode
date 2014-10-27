@@ -86,11 +86,21 @@ func saveResult(ce bool, data []byte, total int, r request) {
 		defer stmt.Close()
 		stmt.Exec(status, ceMessage, -1, r.StatusID)
 	} else {
-		stmt, _ := db.Prepare("update fishteam_cat.submit_status set detail = ? , score = ? where id = ?")
+		stmt, _ := db.Prepare("update fishteam_cat.submit_status set status = ?, detail = ? , score = ? where id = ?")
 		defer stmt.Close()
-		stmt.Exec(string(data), total, r.StatusID)
-
-		hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
-		rdb.Do("HSET", hashtable_name, r.ProblemID, total)
+		totalscore := 0
+		for _, val := range r.CaseScore {
+			totalscore += val
+		}
+		if totalscore == total {
+			status = "正确"
+		} else {
+			status = "错误"
+		}
+		stmt.Exec(status, string(data), total, r.StatusID)
+		if r.ContestID != 0 {
+			hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
+			rdb.Do("HSET", hashtable_name, r.ProblemID, total)
+		}
 	}
 }
