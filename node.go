@@ -90,7 +90,7 @@ func saveResult(ce bool, data []byte, total int, r request) {
 		defer stmt.Close()
 		stmt.Exec(string(data), total, r.StatusID)
 
-		hashtable_name := fmt.Sprintf("contest:%d:%d", r.ContestID, r.UserID)
+		hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
 		rdb.Do("HSET", hashtable_name, r.ProblemID, total)
 	}
 }

@@ -108,19 +108,12 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) {
 		initDir(c)
-		db, err := sql.Open("mysql", "root:"+c.String("p")+"@/fishteam_cat")
-		if err != nil {
-			log.Fatal(err)
-		}
+		dsn := fmt.Sprintf("%s:%s@/%s", "root", c.String("p"), "fishteam_cat")
+		db, _ = sql.Open("mysql", dsn)
 		defer db.Close()
 
-		rdb, err := redis.Dial("tcp", ":6379")
-		if err != nil {
-			log.Fatal(err)
-		}
+		rdb, _ = redis.Dial("tcp", ":6379")
 		defer rdb.Close()
-
-		rdb.Do("HSET", "contestscore:1:100", "A", 100)
 
 		conn, err := amqp.Dial("amqp://" +
 			c.String("user") + ":" +
