@@ -24,3 +24,5 @@ _testmain.go
 *.prof
 tmp/
 testdata/
+*.log
+*.txt

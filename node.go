@@ -20,6 +20,9 @@ type request struct {
 	TestDataId  int    `json:"testdataid"`
 	CaseCount   int    `json:"casecount"`
 	CaseScore   []int  `json:"casescore"`
+	ContestID   int    `json:"contestid"`
+	ProblemID   string `json:"problemid"`
+	UserID      int    `json:"userid"`
 }
 
 var (
@@ -35,7 +38,8 @@ func dealMessage(message []byte, datapath, tmppath string) {
 	compileMessage, err := compile(path.Join(tmppath, fileName), r.Lang)
 	if err == nil && compileMessage != "" {
 		// Compile Error
-		saveResult(true, []byte(compileMessage), 0, r.StatusID)
+		saveResult(true, []byte(compileMessage), 0, r)
+		return
 	} else if err != nil {
 		log.Fatalf("%s: %s", "Comple Error", err)
 		panic(fmt.Sprintf("%s: %s", "Compile Error", err))
@@ -48,7 +52,7 @@ func dealMessage(message []byte, datapath, tmppath string) {
 	compiledProgram = path.Join(currentpath, "Main"+suffifx)
 	os.Chown(compiledProgram, uid, gid)
 	response, total := judge(r)
-	saveResult(false, response, total, r.StatusID)
+	saveResult(false, response, total, r)
 }
 
 func parseRequest(message []byte) (r request) {
@@ -73,16 +77,31 @@ func saveCodeFile(code, lang, tmppath string) (fileName string) {
 	return
 }
 
-func saveResult(ce bool, data []byte, total int, statusid int) {
+func saveResult(ce bool, data []byte, total int, r request) {
 	db.Ping()
+	var status string
 	if ce {
+		status = "Compile Error"
 		ceMessage := string(data)
-		stmt, _ := db.Prepare("update fishteam_cat.submit_status set compilerOutput = ? , score = ? where id = ?;")
+		stmt, _ := db.Prepare("update fishteam_cat.submit_status set status = ?, compilerOutput = ? , score = ? where id = ?;")
 		defer stmt.Close()
-		stmt.Exec(ceMessage, -1, statusid)
+		stmt.Exec(status, ceMessage, -1, r.StatusID)
 	} else {
-		stmt, _ := db.Prepare("update fishteam_cat.submit_status set detail = ? , score = ? where id = ?")
+		stmt, _ := db.Prepare("update fishteam_cat.submit_status set status = ?, detail = ? , score = ? where id = ?")
 		defer stmt.Close()
-		stmt.Exec(string(data), total, statusid)
+		totalscore := 0
+		for _, val := range r.CaseScore {
+			totalscore += val
+		}
+		if totalscore == total {
+			status = "Accepted"
+		} else {
+			status = "Wrong Answer"
+		}
+		stmt.Exec(status, string(data), total, r.StatusID)
+		if r.ContestID != 0 {
+			hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
+			rdb.Do("HSET", hashtable_name, r.ProblemID, total)
+		}
 	}
 }
