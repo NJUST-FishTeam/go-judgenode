@@ -9,4 +9,4 @@ A distribute judge node.
 
 ## 运行
 
-> sudo ./go-judgenode
+> sudo ./go-judgenode --p 数据库密码
