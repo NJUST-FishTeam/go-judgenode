@@ -39,6 +39,7 @@ func dealMessage(message []byte, datapath, tmppath string) {
 	if err == nil && compileMessage != "" {
 		// Compile Error
 		saveResult(true, []byte(compileMessage), 0, r)
+		return
 	} else if err != nil {
 		log.Fatalf("%s: %s", "Comple Error", err)
 		panic(fmt.Sprintf("%s: %s", "Compile Error", err))

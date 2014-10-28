@@ -105,21 +105,31 @@ func main() {
 			Name:  "p",
 			Usage: "the password of mysql",
 		},
+		cli.StringFlag{
+			Name:  "mh",
+			Value: "localhost",
+			Usage: "the host of mysql",
+		},
+		cli.StringFlag{
+			Name:  "rh",
+			Usage: "the host of redis",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		initDir(c)
-		dsn := fmt.Sprintf("%s:%s@/%s", "root", c.String("p"), "fishteam_cat")
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", "root", c.String("p"), c.String("mh"), "fishteam_cat")
 		db, _ = sql.Open("mysql", dsn)
 		defer db.Close()
 
-		rdb, _ = redis.Dial("tcp", ":6379")
+		rdb, _ = redis.Dial("tcp", c.String("rh")+":6379")
 		defer rdb.Close()
 
-		conn, err := amqp.Dial("amqp://" +
-			c.String("user") + ":" +
-			c.String("password") + "@" +
-			c.String("host") + ":" +
-			c.String("port") + "/")
+		url := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+			c.String("user"),
+			c.String("password"),
+			c.String("host"),
+			c.String("port"))
+		conn, err := amqp.Dial(url)
 		failOnError(err, "Failed to connect to RabbitMQ")
 		defer conn.Close()
 

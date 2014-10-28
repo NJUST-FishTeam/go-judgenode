@@ -1,0 +1,72 @@
+NOTICE [2014-10-28 22:55:37] [logger.h:92] log_open
+TRACE [2014-10-28 22:55:37] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:55:37] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:55:37] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:55:37] [logger.h:100] log_close
+WARNING [2014-10-28 22:55:37] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:55:37] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:55:37] [logger.h:100] log_close
+NOTICE [2014-10-28 22:55:37] [logger.h:92] log_open
+TRACE [2014-10-28 22:55:37] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:55:37] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:55:37] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:55:37] [logger.h:100] log_close
+WARNING [2014-10-28 22:55:37] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:55:37] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:55:37] [logger.h:100] log_close
+NOTICE [2014-10-28 22:57:45] [logger.h:92] log_open
+TRACE [2014-10-28 22:57:45] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:57:45] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:57:45] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:57:45] [logger.h:100] log_close
+WARNING [2014-10-28 22:57:45] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:57:45] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:57:45] [logger.h:100] log_close
+NOTICE [2014-10-28 22:57:45] [logger.h:92] log_open
+TRACE [2014-10-28 22:57:45] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:57:45] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:57:45] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:57:45] [logger.h:100] log_close
+WARNING [2014-10-28 22:57:45] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:57:45] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:57:45] [logger.h:100] log_close
+NOTICE [2014-10-28 22:58:27] [logger.h:92] log_open
+TRACE [2014-10-28 22:58:27] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:58:27] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:58:27] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:58:27] [logger.h:100] log_close
+WARNING [2014-10-28 22:58:27] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:58:27] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:58:27] [logger.h:100] log_close
+NOTICE [2014-10-28 22:58:27] [logger.h:92] log_open
+TRACE [2014-10-28 22:58:27] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:58:27] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:58:27] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:58:27] [logger.h:100] log_close
+WARNING [2014-10-28 22:58:27] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:58:27] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:58:27] [logger.h:100] log_close
+NOTICE [2014-10-28 22:59:48] [logger.h:92] log_open
+TRACE [2014-10-28 22:59:48] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:59:48] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:59:48] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:59:48] [logger.h:100] log_close
+WARNING [2014-10-28 22:59:48] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:59:48] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:59:48] [logger.h:100] log_close
+NOTICE [2014-10-28 22:59:48] [logger.h:92] log_open
+TRACE [2014-10-28 22:59:48] [core.cpp:453] Start Judging.
+TRACE [2014-10-28 22:59:48] [core.cpp:156] Start to redirect the IO.
+TRACE [2014-10-28 22:59:48] [core.cpp:165] redirect io is OK.
+TRACE [2014-10-28 14:59:48] [logger.h:100] log_close
+WARNING [2014-10-28 22:59:48] [core.cpp:514] child stop by 11 : Segmentation fault
+
+TRACE [2014-10-28 22:59:48] [core.cpp:55] The final result is Runtime Error 0 0 
+TRACE [2014-10-28 22:59:48] [logger.h:100] log_close
