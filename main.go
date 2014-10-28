@@ -8,7 +8,9 @@ import (
 	"strconv"
 
 	"database/sql"
+
 	"github.com/codegangsta/cli"
+	"github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/streadway/amqp"
 )
@@ -20,7 +22,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-const APP_VER = "0.1.0"
+const APP_VER = "0.2.0"
 
 var (
 	testdataPath = "./testdata/"
@@ -29,6 +31,7 @@ var (
 	uid          int
 	gid          int
 	db           *sql.DB
+	rdb          redis.Conn
 )
 
 func init() {
@@ -98,18 +101,35 @@ func main() {
 			Value: runPath,
 			Usage: "The dir of sandbox",
 		},
+		cli.StringFlag{
+			Name:  "p",
+			Usage: "the password of mysql",
+		},
+		cli.StringFlag{
+			Name:  "mh",
+			Value: "localhost",
+			Usage: "the host of mysql",
+		},
+		cli.StringFlag{
+			Name:  "rh",
+			Usage: "the host of redis",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		initDir(c)
-		db, _ = sql.Open("mysql", "root:jych-0017@/fishteam_cat")
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", "root", c.String("p"), c.String("mh"), "fishteam_cat")
+		db, _ = sql.Open("mysql", dsn)
 		defer db.Close()
-		//db.Ping()
 
-		conn, err := amqp.Dial("amqp://" +
-			c.String("user") + ":" +
-			c.String("password") + "@" +
-			c.String("host") + ":" +
-			c.String("port") + "/")
+		rdb, _ = redis.Dial("tcp", c.String("rh")+":6379")
+		defer rdb.Close()
+
+		url := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+			c.String("user"),
+			c.String("password"),
+			c.String("host"),
+			c.String("port"))
+		conn, err := amqp.Dial(url)
 		failOnError(err, "Failed to connect to RabbitMQ")
 		defer conn.Close()
 
