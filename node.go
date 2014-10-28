@@ -80,7 +80,7 @@ func saveResult(ce bool, data []byte, total int, r request) {
 	db.Ping()
 	var status string
 	if ce {
-		status = "编译错误"
+		status = "Compile Error"
 		ceMessage := string(data)
 		stmt, _ := db.Prepare("update fishteam_cat.submit_status set status = ?, compilerOutput = ? , score = ? where id = ?;")
 		defer stmt.Close()
@@ -93,9 +93,9 @@ func saveResult(ce bool, data []byte, total int, r request) {
 			totalscore += val
 		}
 		if totalscore == total {
-			status = "正确"
+			status = "Accepted"
 		} else {
-			status = "错误"
+			status = "Wrong Answer"
 		}
 		stmt.Exec(status, string(data), total, r.StatusID)
 		if r.ContestID != 0 {
