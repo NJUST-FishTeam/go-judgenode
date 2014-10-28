@@ -22,7 +22,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-const APP_VER = "0.1.0"
+const APP_VER = "0.2.0"
 
 var (
 	testdataPath = "./testdata/"
