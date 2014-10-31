@@ -5,10 +5,10 @@ import (
 	"log"
 	"path"
 
+	"github.com/garyburd/redigo/redis"
+
 	"encoding/json"
 	"os"
-
-	//"github.com/bitly/go-simplejson"
 )
 
 type request struct {
@@ -100,8 +100,10 @@ func saveResult(ce bool, data []byte, total int, r request) {
 		}
 		stmt.Exec(status, string(data), total, r.StatusID)
 		if r.ContestID != 0 {
+			rconn, _ := redis.Dial("tcp", ":6379")
+			defer rconn.Close()
 			hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
-			rdb.Do("HSET", hashtable_name, r.ProblemID, total)
+			rconn.Do("HSET", hashtable_name, r.ProblemID, total)
 		}
 	}
 }
