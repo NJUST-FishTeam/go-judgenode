@@ -22,16 +22,14 @@ func failOnError(err error, msg string) {
 	}
 }
 
-const APP_VER = "0.2.1"
+const APP_VER = "0.3.0"
 
 var (
-	testdataPath = "./testdata/"
-	tmpPath      = "./tmp/"
-	runPath      = "./rundir/"
-	uid          int
-	gid          int
-	db           *sql.DB
-	rdb          redis.Conn
+	uid    int
+	gid    int
+	db     *sql.DB
+	rdb    redis.Conn
+	config *Config
 )
 
 func init() {
@@ -40,18 +38,15 @@ func init() {
 	gid, _ = strconv.Atoi(usr.Gid)
 }
 
-func initDir(c *cli.Context) {
-	if _, err := os.Stat(c.String("tmppath")); err != nil && !os.IsExist(err) {
-		os.MkdirAll(c.String("tmppath"), os.ModePerm)
+func initDir() {
+	if _, err := os.Stat(config.TempPath); err != nil && !os.IsExist(err) {
+		os.MkdirAll(config.TempPath, os.ModePerm)
 	}
-	tmpPath = c.String("tmppath")
-	os.Chown(tmpPath, uid, gid)
-	if _, err := os.Stat(c.String("runpath")); err != nil && !os.IsExist(err) {
-		os.MkdirAll(c.String("runpath"), os.ModePerm)
+	os.Chown(config.TempPath, uid, gid)
+	if _, err := os.Stat(config.RunPath); err != nil && !os.IsExist(err) {
+		os.MkdirAll(config.RunPath, os.ModePerm)
 	}
-	runPath = c.String("runpath")
-	os.Chown(runPath, uid, gid)
-	testdataPath = c.String("datapath")
+	os.Chown(config.RunPath, uid, gid)
 }
 
 func main() {
@@ -62,75 +57,50 @@ func main() {
 	app.Author = "maemual (maemual@gmail.com)"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "queue",
-			Value: "judge_task",
-			Usage: "The name of judge task queue",
-		},
-		cli.StringFlag{
-			Name:  "host",
-			Value: "localhost",
-			Usage: "the ip of the RabbitMQ",
-		},
-		cli.StringFlag{
-			Name:  "port",
-			Value: "5672",
-			Usage: "the port of the RabbitMQ",
-		},
-		cli.StringFlag{
-			Name:  "user",
-			Value: "guest",
-			Usage: "the user name of the RabbitMQ",
-		},
-		cli.StringFlag{
-			Name:  "password",
-			Value: "guest",
-			Usage: "the password of the RabbitMQ",
-		},
-		cli.StringFlag{
-			Name:  "datapath",
-			Value: testdataPath,
-			Usage: "The path of test data",
-		},
-		cli.StringFlag{
-			Name:  "tmppath",
-			Value: tmpPath,
-			Usage: "The path of tmp dir",
-		},
-		cli.StringFlag{
-			Name:  "runpath",
-			Value: runPath,
-			Usage: "The dir of sandbox",
-		},
-		cli.StringFlag{
-			Name:  "p",
-			Usage: "the password of mysql",
-		},
-		cli.StringFlag{
-			Name:  "mh",
-			Value: "localhost",
-			Usage: "the host of mysql",
-		},
-		cli.StringFlag{
-			Name:  "rh",
-			Usage: "the host of redis",
+			Name:  "c",
+			Value: "conf.ini",
+			Usage: "The path of config file",
 		},
 	}
 	app.Action = func(c *cli.Context) {
-		initDir(c)
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", "root", c.String("p"), c.String("mh"), "fishteam_cat")
-		db, _ = sql.Open("mysql", dsn)
-		defer db.Close()
+		var err error
+		config, err = ParseConfig(c.String("c"))
+		initDir()
 
-		rdb, _ = redis.Dial("tcp", c.String("rh")+":6379")
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+			config.SQLUser,
+			config.SQLPassword,
+			config.SQLHost,
+			config.SQLPort,
+			config.SQLDatabase)
+		db, err = sql.Open("mysql", dsn)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		err = db.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		constring := fmt.Sprintf("%s:%d",
+			config.RedisHost,
+			config.RedisPort)
+		rdb, err = redis.Dial("tcp", constring)
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer rdb.Close()
 
-		url := fmt.Sprintf("amqp://%s:%s@%s:%s/",
-			c.String("user"),
-			c.String("password"),
-			c.String("host"),
-			c.String("port"))
+		url := fmt.Sprintf("amqp://%s:%s@%s:%d/",
+			config.RMQUser,
+			config.RMQPassword,
+			config.RMQHost,
+			config.RMQPort)
 		conn, err := amqp.Dial(url)
-		failOnError(err, "Failed to connect to RabbitMQ")
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer conn.Close()
 
 		ch, err := conn.Channel()
@@ -138,12 +108,12 @@ func main() {
 		defer ch.Close()
 
 		q, err := ch.QueueDeclare(
-			c.String("queue"), // name
-			true,              // durable
-			false,             // delete when unused
-			false,             // exclusive
-			false,             // no-wait
-			nil,               // arguments
+			config.RMQQueueName, // name
+			true,                // durable
+			false,               // delete when unused
+			false,               // exclusive
+			false,               // no-wait
+			nil,                 // arguments
 		)
 		failOnError(err, "Failed to declare a queue")
 
@@ -170,7 +140,7 @@ func main() {
 		go func() {
 			for d := range msgs {
 				log.Printf("Received a message: %s", d.Body)
-				dealMessage(d.Body, c.String("datapath"), c.String("tmppath"))
+				dealMessage(d.Body)
 				d.Ack(false)
 			}
 		}()

@@ -30,12 +30,12 @@ var (
 	r               request
 )
 
-func dealMessage(message []byte, datapath, tmppath string) {
+func dealMessage(message []byte) {
 	r = parseRequest(message)
 
-	fileName := saveCodeFile(r.Code, r.Lang, tmppath)
+	fileName := saveCodeFile(r.Code, r.Lang)
 
-	compileMessage, err := compile(path.Join(tmppath, fileName), r.Lang)
+	compileMessage, err := compile(path.Join(config.TempPath, fileName), r.Lang)
 	if err == nil && compileMessage != "" {
 		// Compile Error
 		saveResult(true, []byte(compileMessage), 0, r)
@@ -60,13 +60,13 @@ func parseRequest(message []byte) (r request) {
 	return
 }
 
-func saveCodeFile(code, lang, tmppath string) (fileName string) {
+func saveCodeFile(code, lang string) (fileName string) {
 	if lang != "java" {
 		fileName = "code." + lang
 	} else {
 		fileName = "Main.java"
 	}
-	filePath := path.Join(tmppath, fileName)
+	filePath := path.Join(config.TempPath, fileName)
 	sourceCode, err := os.Create(filePath)
 	if err != nil {
 		log.Fatalf("%s: %s", "Can not create file", err)
