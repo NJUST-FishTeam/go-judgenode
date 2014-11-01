@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"strconv"
+	"time"
 
 	"database/sql"
 
@@ -29,6 +30,7 @@ var (
 	gid    int
 	db     *sql.DB
 	rdb    redis.Conn
+	pool   *redis.Pool
 	config *Config
 )
 
@@ -49,6 +51,25 @@ func initDir() {
 	os.Chown(config.RunPath, uid, gid)
 }
 
+func newPool(host string, port int) *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     2,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			cs := fmt.Sprintf("%s:%d", host, port)
+			c, err := redis.Dial("tcp", cs)
+			if err != nil {
+				return nil, err
+			}
+			return c, err
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "JudgeNode"
@@ -67,6 +88,7 @@ func main() {
 		config, err = ParseConfig(c.String("c"))
 		initDir()
 
+		// MySQL
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 			config.SQLUser,
 			config.SQLPassword,
@@ -83,15 +105,10 @@ func main() {
 			log.Fatal(err)
 		}
 
-		constring := fmt.Sprintf("%s:%d",
-			config.RedisHost,
-			config.RedisPort)
-		rdb, err = redis.Dial("tcp", constring)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rdb.Close()
+		// Redis connection pool
+		pool = newPool(config.RedisHost, config.RedisPort)
 
+		// RabbitMQ
 		url := fmt.Sprintf("amqp://%s:%s@%s:%d/",
 			config.RMQUser,
 			config.RMQPassword,
