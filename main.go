@@ -22,7 +22,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-const APP_VER = "0.2.1"
+const APP_VER = "0.3.0"
 
 var (
 	uid    int
