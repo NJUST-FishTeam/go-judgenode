@@ -49,33 +49,33 @@ func judge(r request) ([]byte, int) {
 }
 
 func prepareFiles(r request, num int) {
-	if _, err := os.Stat(runPath); err != nil && !os.IsExist(err) {
-		os.MkdirAll(runPath, os.ModePerm)
-		os.Chown(runPath, uid, gid)
+	if _, err := os.Stat(config.RunPath); err != nil && !os.IsExist(err) {
+		os.MkdirAll(config.RunPath, os.ModePerm)
+		os.Chown(config.RunPath, uid, gid)
 	}
 	if r.Lang != "java" {
 		cmd := exec.Command("cp", compiledProgram,
-			path.Join(runPath, "a.out"))
+			path.Join(config.RunPath, "a.out"))
 		cmd.Run()
-		os.Chown(path.Join(runPath, "a.out"), uid, gid)
+		os.Chown(path.Join(config.RunPath, "a.out"), uid, gid)
 	} else {
-		cmd := exec.Command("cp", compiledProgram, runPath)
+		cmd := exec.Command("cp", compiledProgram, config.RunPath)
 		cmd.Run()
-		os.Chown(path.Join(runPath, compiledProgram), uid, gid)
+		os.Chown(path.Join(config.RunPath, compiledProgram), uid, gid)
 	}
 	cmd := exec.Command("cp",
-		path.Join(testdataPath, strconv.Itoa(r.TestDataId), strconv.Itoa(num)+".in"),
-		path.Join(runPath, "in.in"))
+		path.Join(config.TestDataPath, strconv.Itoa(r.TestDataId), strconv.Itoa(num)+".in"),
+		path.Join(config.RunPath, "in.in"))
 	cmd.Run()
-	os.Chown(path.Join(runPath, "in.in"), uid, gid)
+	os.Chown(path.Join(config.RunPath, "in.in"), uid, gid)
 	cmd = exec.Command("cp",
-		path.Join(testdataPath, strconv.Itoa(r.TestDataId), strconv.Itoa(num)+".out"),
-		path.Join(runPath, "out.out"))
+		path.Join(config.TestDataPath, strconv.Itoa(r.TestDataId), strconv.Itoa(num)+".out"),
+		path.Join(config.RunPath, "out.out"))
 	cmd.Run()
-	os.Chown(path.Join(runPath, "out.out"), uid, gid)
-	cmd = exec.Command("cp", "Core", runPath)
+	os.Chown(path.Join(config.RunPath, "out.out"), uid, gid)
+	cmd = exec.Command("cp", "Core", config.RunPath)
 	cmd.Run()
-	os.Chown(path.Join(runPath, "Core"), uid, gid)
+	os.Chown(path.Join(config.RunPath, "Core"), uid, gid)
 }
 
 func runProgram(r request) error {
@@ -98,7 +98,7 @@ func runProgram(r request) error {
 		"-m",
 		strconv.Itoa(r.MemoryLimit),
 		"-d",
-		runPath,
+		config.RunPath,
 		"-l",
 		strconv.Itoa(lang),
 	)
@@ -106,7 +106,7 @@ func runProgram(r request) error {
 }
 
 func getResult() (result string, time int, memory int) {
-	resultFile := path.Join(runPath, "result.txt")
+	resultFile := path.Join(config.RunPath, "result.txt")
 	f, _ := os.Open(resultFile)
 	defer f.Close()
 	buff := bufio.NewReader(f)
@@ -120,5 +120,5 @@ func getResult() (result string, time int, memory int) {
 }
 
 func cleanFiles() {
-	os.RemoveAll(runPath)
+	os.RemoveAll(config.RunPath)
 }
