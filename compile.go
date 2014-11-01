@@ -63,7 +63,7 @@ func compile(codepath, lang string) (string, error) {
 				// syscall is generally platform dependent, WaitStatus is
 				// defined for both Unix and Windows and in both cases has
 				// an ExitStatus() method with the same signature.
-				if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				if _, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 					ch <- string(bytes)
 					return
 				}
