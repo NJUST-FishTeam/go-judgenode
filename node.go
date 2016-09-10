@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	"strconv"
 	"encoding/json"
 	"os"
 )
@@ -21,6 +22,7 @@ type request struct {
 	ContestID   int    `json:"contestid"`
 	ProblemID   string `json:"problemid"`
 	UserID      int    `json:"userid"`
+	HighScore	int	   `json:"highest_score"`
 }
 
 var (
@@ -97,10 +99,24 @@ func saveResult(ce bool, data []byte, total int, r request) {
 			status = "Wrong Answer"
 		}
 		stmt.Exec(status, string(data), total, r.StatusID)
-		if r.ContestID != 0 {
-			rconn := pool.Get()
-			defer rconn.Close()
-			hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
+		rconn := pool.Get()
+		defer rconn.Close()
+		hashtable_name := fmt.Sprintf("contestscore:%d:%d", r.ContestID, r.UserID)
+		if r.HighScore == 1 {
+			_score, _ := rconn.Do("HGET", hashtable_name, r.ProblemID)
+			var score int
+			if _score != nil {
+				_score := _score.([]uint8)
+				str := make([]byte, len(_score))
+			    for i, v := range _score {
+			        str[i] = byte(v)
+			    }
+			    score, _ = strconv.Atoi(string(str))
+			}
+			if _score == nil || score < total {
+				rconn.Do("HSET", hashtable_name, r.ProblemID, total)
+			}
+		} else {
 			rconn.Do("HSET", hashtable_name, r.ProblemID, total)
 		}
 	}
