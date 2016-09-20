@@ -19,7 +19,7 @@ func compile(codepath, lang string) (string, error) {
 			codepath,
 			"-o", "Main",
 			"-static", "-w",
-			"-lm", "-O2",
+			"-lm", "-O2", "-std=c++14",
 			"-DONLINE_JUDGE",
 		)
 	case "c":
@@ -28,7 +28,7 @@ func compile(codepath, lang string) (string, error) {
 			codepath,
 			"-o", "Main",
 			"-static", "-w",
-			"-lm", "-std=c99",
+			"-lm", "-std=c11",
 			"-O2", "-DONLINE_JUDGE",
 		)
 	case "java":
